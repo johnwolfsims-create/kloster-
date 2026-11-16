@@ -191,6 +191,15 @@ body.lang-en .hr-rub .en{opacity:1}
 .beads .bc{flex-basis:100%;text-align:center;font-variant-caps:all-small-caps;letter-spacing:.14em;color:var(--ink2);font-size:15px}
 .beads.done .bc{color:var(--red)}
 
+
+.grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(52px,1fr));gap:8px;margin-top:10px}
+.grid a{display:grid;place-items:center;height:48px;border:1px solid var(--rule);border-radius:4px;font-variant-numeric:oldstyle-nums;font-size:19px;color:var(--ink2)}
+.grid a:active{background:var(--rule)}
+.lecbar{display:flex;flex-direction:column;align-items:center;gap:6px;margin:18px 0 6px}
+.lecbar button{padding:9px 18px;border:1px solid var(--red);border-radius:22px;color:var(--red);font-variant-caps:all-small-caps;letter-spacing:.1em;font-size:16px}
+.lecbar button.on{background:var(--red);color:var(--bg)}
+.lecbar .lbl{font-variant-caps:all-small-caps;letter-spacing:.12em;color:var(--ink3);font-size:14px}
+
 /* search */
 .res{padding:12px 4px;border-bottom:1px solid var(--rule);display:block}
 .res:active{background:var(--rule)}
@@ -386,6 +395,7 @@ function vHome(){
      <input id="hq" type="search" placeholder="Quaere · search psalms and prayers" enterkeyhint="search" autocomplete="off"></label>
    <a class="big" href="#horarium"><span class="ini">H</span><div><div class="nm">Horarium</div><div class="sb">The Hours of the day · ${esc(ORDINES[S.ordo].la)}</div></div><span class="ar">›</span></a>
    <a class="big" href="#psalterium"><span class="ini">P</span><div><div class="nm">Psalterium</div><div class="sb">The CL Psalms of David</div></div><span class="ar">›</span></a>
+   <a class="big" href="#biblia"><span class="ini">B</span><div><div class="nm">Biblia Sacra</div><div class="sb">The whole Bible · Latin and English</div></div><span class="ar">›</span></a>
    <a class="big" href="#cantica"><span class="ini">C</span><div><div class="nm">Cantica</div><div class="sb">Benedictus · Magnificat · Nunc dimittis</div></div><span class="ar">›</span></a>
    <a class="big" href="#orationes"><span class="ini">O</span><div><div class="nm">Orationes</div><div class="sb">Prayers, antiphons and hymns of the Hours</div></div><span class="ar">›</span></a>
    <div class="sect">Collectiones</div>
@@ -473,6 +483,62 @@ function vColl(id){
   swipe(null,null);
 }
 
+/* ---------- Biblia ---------- */
+const BIB=K.bib, BCACHE={};
+function loadBook(i){ if(BCACHE[i]) return Promise.resolve(BCACHE[i]);
+  return fetch('bible/b'+i+'.json').then(r=>{if(!r.ok)throw new Error(r.status);return r.json()}).then(j=>BCACHE[i]=j); }
+const LSEQ=(()=>{const a=[];BIB.forEach((b,i)=>{if(i===20)return;for(let c=1;c<=b[2];c++)a.push([i,c])});return a})();
+function lecPos(){const p=store.get('lectio',{b:0,c:1});let k=LSEQ.findIndex(x=>x[0]===p.b&&x[1]===p.c);return k<0?0:k}
+function setLec(k){k=(k+LSEQ.length)%LSEQ.length;store.set('lectio',{b:LSEQ[k][0],c:LSEQ[k][1]})}
+const bName=(i,c)=>BIB[i][0]+(c?' '+c:'');
+function vBiblia(){
+  setBar('Biblia Sacra','home');
+  const k=lecPos(),[lb,lc]=LSEQ[k];
+  let h=`<div class="view"><div class="idx-h"><h2>Biblia Sacra</h2><div class="date">Vulgata Clementina · Douay-Rheims</div></div>
+   <a class="hint" href="#lib-${lb}-${lc}" style="margin:16px 0 4px"><span><span class="lbl">Lectio continua · ${k+1} / ${LSEQ.length}</span><br><span class="v">${esc(bName(lb))} · Caput ${roman(lc)}</span></span><span class="ar">›</span></a>`;
+  [['vt','Vetus Testamentum','The Old Testament'],['nt','Novum Testamentum','The New Testament']].forEach(([t,la,en])=>{
+    h+=`<div class="quin"><div class="q1">${la}</div><div class="q2">${en}</div></div>`;
+    BIB.forEach((b,i)=>{ if(b[3]!==t) return;
+      h+=`<a class="row" href="${i===20?'#psalterium':'#lib-'+i}"><span class="no">${b[2]}</span><div class="tx"><div class="la">${esc(b[0])}</div><div class="en">${esc(b[1])}</div></div></a>`});
+  });
+  main.innerHTML=h+'</div>';
+}
+function vLiber(i){
+  const b=BIB[i]; if(!b) return vBiblia(); if(i===20) return go('psalterium');
+  setBar(b[0],'biblia');
+  main.innerHTML=`<div class="view"><div class="rd-h"><div class="num">${esc(b[1])}</div><h2>${esc(b[0])}</h2><div class="inc">${b[2]} ${b[2]===1?'caput':'capita'}</div></div><div class="orn"><span>✠</span></div>
+   <div class="grid">${Array.from({length:b[2]},(_,c)=>`<a href="#lib-${i}-${c+1}">${c+1}</a>`).join('')}</div></div>`;
+}
+function chapterHTML(vs){return verseHTML(vs.map(v=>[v[0],v[1],v[2]]),{pfx:'v'})}
+function vCaput(i,c,hl){
+  const b=BIB[i]; if(!b||c<1||c>b[2]) return vBiblia();
+  setBar(b[0]+' '+roman(c),'lib-'+i);
+  const prev=c>1?[i,c-1]:(i>0?[i-1,BIB[i-1][2]]:null), next=c<b[2]?[i,c+1]:(i<72?[i+1,1]:null);
+  const k=LSEQ.findIndex(x=>x[0]===i&&x[1]===c), cur=k===lecPos();
+  main.innerHTML=`<div class="view"><div class="rd-h"><div class="num">${esc(b[1])}</div><h2>${esc(b[0])}</h2><div class="inc">Caput ${roman(c)}</div></div><div class="orn"><span>✠</span></div>
+   <div id="chap"><div class="empty">Legitur…</div></div>
+   ${k>=0?`<div class="lecbar">${cur?'<span class="lbl">Lectio continua hodie</span>':`<button id="lecHere">Lectio continua hinc</button>`}</div>`:''}
+   <nav class="pn">${prev?`<a href="#lib-${prev[0]}-${prev[1]}"><span class="k">‹ ${esc(bName(prev[0]))} ${roman(prev[1])}</span></a>`:''}${next?`<a class="nx" href="#lib-${next[0]}-${next[1]}"><span class="k">${esc(bName(next[0]))} ${roman(next[1])} ›</span></a>`:''}</nav></div>`;
+  loadBook(i).then(B=>{const el=$('#chap');if(el){el.innerHTML=chapterHTML(B[c-1]);if(hl)highlight(hl)}}).catch(()=>{const el=$('#chap');if(el)el.innerHTML='<div class="empty">Could not load this book. Check your connection and try again.</div>'});
+  const lh=$('#lecHere'); if(lh) lh.onclick=()=>{setLec(k);vCaput(i,c)};
+  swipe(prev?`lib-${prev[0]}-${prev[1]}`:null,next?`lib-${next[0]}-${next[1]}`:null);
+}
+function lectioSection(){
+  const k=lecPos(),[i,c]=LSEQ[k];
+  const today=new Date().toDateString(), doneToday=store.get('lecDone','')===today;
+  return `<section class="hs" id="lec"><div class="hs-h"><a href="#lib-${i}-${c}">Lectio · ${esc(bName(i))} ${roman(c)}</a><span class="ref i">${esc(BIB[i][1])} ${c}</span></div>
+    <div id="lecBody"><div class="empty">Legitur…</div></div>
+    <div class="hr-rub"><span class="la">V. Tu autem, Domine, miserere nobis. R. Deo gratias.</span><span class="en">But thou, O Lord, have mercy on us. Thanks be to God.</span></div>
+    <div class="lecbar"><button id="lecDone" class="${doneToday?'on':''}">${doneToday?'Lectio perfecta ✓':'Lectio perfecta — next chapter tomorrow'}</button><div class="lbl">${k+1} / ${LSEQ.length}</div></div></section>`;
+}
+function wireLectio(){
+  const k=lecPos(),[i,c]=LSEQ[k];
+  loadBook(i).then(B=>{const el=$('#lecBody');if(el)el.innerHTML=verseHTML(B[c-1].map(v=>[v[0],v[1],v[2]]),{pfx:'lv',init:true})}).catch(()=>{const el=$('#lecBody');if(el)el.innerHTML='<div class="empty">Could not load the reading. Check your connection.</div>'});
+  const bt=$('#lecDone'); if(!bt) return;
+  bt.onclick=()=>{const today=new Date().toDateString(); if(store.get('lecDone','')===today) return;
+    store.set('lecDone',today); setLec(k+1); bt.classList.add('on'); bt.textContent='Lectio perfecta ✓'; };
+}
+
 /* ---------- Horarium ---------- */
 const HOURS=[
  {k:'vig',la:'Vigiliae',en:'Vigils · the night watch',t:'03:00',bell:0},
@@ -524,11 +590,11 @@ function office(ordo,hk,d){
    case 'vig':
      it.push(R('Ter dicitur:','Said three times:'),P('labia'),PSI(3),PSI(94));
      if(B){
-       it.push(H('Nocturnus I','First Nocturn'),...B_VIG[d][0].map(PSI),R('Lectio ex Scriptura, cum responsorio.','Reading: a passage of Scripture, read slowly.'));
+       it.push(H('Nocturnus I','First Nocturn'),...B_VIG[d][0].map(PSI),{t:'lec'});
        it.push(H('Nocturnus II','Second Nocturn'),...B_VIG[d][1].map(PSI),R('Lectio ex Apostolo, memoriter.','A short reading from St. Paul, said by heart.'));
        if(d===0){it.push(H('Nocturnus III','Third Nocturn'),PSI('vigila'),PSI('vigilb'),PSI('vigilc'),P('tedeum'),R('Legitur Evangelium dominicæ.','The Sunday Gospel is read.'))}
      } else {
-       it.push(R('Lectio: caput unum Scripturæ, ordine continuo.','Reading: one chapter of Scripture, read slowly — the Bible straight through, a chapter a night.'),P('tedeum'));
+       it.push({t:'lec'},P('tedeum'));
      }
      it.push(...END); break;
    case 'lau':
@@ -554,7 +620,7 @@ function psLabel(i){
 }
 function summary(ordo,hk,d){
   if(ordo==='militum'){const n=hk==='vig'?13:hk==='ves'?9:7;return `${roman(n)} × Pater noster`}
-  return office(ordo,hk,d).filter(i=>i.t==='ps'||i.t==='ca').map(psLabel).join(' · ');
+  return office(ordo,hk,d).filter(i=>i.t==='ps'||i.t==='ca'||i.t==='lec').map(i=>i.t==='lec'?(()=>{const[b,c]=LSEQ[lecPos()];return 'Lectio: '+bName(b)+' '+c})():psLabel(i)).join(' · ');
 }
 function curHour(now){const m=now.getHours()*60+now.getMinutes();let c=HOURS[HOURS.length-1];for(const h of HOURS){const[a,b]=h.t.split(':').map(Number);if(m>=a*60+b)c=h}return c}
 const ICTUS=n=>n?`${'●'.repeat(n)}`:'alarm';
@@ -583,6 +649,7 @@ function vHora(k){
   items.forEach((i,idx)=>{
     if(i.t==='h'){body+=`<div class="hh"><span class="f">${esc(i.la)}</span><span class="e">${esc(i.en)}</span></div>`;return}
     if(i.t==='rub'){body+=`<div class="hr-rub"><span class="la">${esc(i.la)}</span><span class="en">${esc(i.en)}</span></div>`;return}
+    if(i.t==='lec'){body+=lectioSection();return}
     if(i.t==='pn'){body+=`<div class="beads" data-n="${i.n}">${Array.from({length:i.n},(_,j)=>`<span class="bd"></span>`).join('')}<div class="bc">0 / ${i.n}</div></div>`;return}
     if(i.t==='pr'){const p=byId(OR,i.id);
       body+=`<section class="hs"><div class="hs-h"><a href="#or-${p.id}">${esc(p.name)}</a></div><div class="${p.form}">${p.la.map((la,j)=>{const a=blk(la),b=blk(p.en[j]);return `<div class="pr-blk ${a.cls}"><span class="la">${a.html}</span><span class="en">${b.html}</span></div>`}).join('')}</div></section>`;return}
@@ -596,6 +663,7 @@ function vHora(k){
   main.innerHTML=`<div class="view"><div class="rd-h"><div class="num">${esc(ORDINES[ordo].la)} · ${DIES[d]}</div><h2>${esc(o.la)}</h2><div class="inc">${esc(o.en)}</div><div class="hb">${o.t} · ${o.bell?roman(o.bell)+' ictus campanæ':'alarm'}</div></div>
     <div class="orn"><span>✠</span></div>${body}
     <nav class="pn">${prev?`<a href="#hora-${prev.k}"><span class="k">‹ ${prev.la}</span><span class="s">${prev.t}</span></a>`:''}${next?`<a class="nx" href="#hora-${next.k}"><span class="k">${next.la} ›</span><span class="s">${next.t}</span></a>`:''}</nav></div>`;
+  if($('#lec')) wireLectio();
   main.querySelectorAll('.beads').forEach(bx=>{let c=0;const n=+bx.dataset.n,bs=bx.querySelectorAll('.bd'),lab=bx.querySelector('.bc');
     bx.onclick=()=>{c=c>=n?0:c+1;bs.forEach((b,j)=>b.classList.toggle('on',j<c));lab.textContent=c>=n?'Deo gratias':`${c} / ${n}`;bx.classList.toggle('done',c>=n)}});
   swipe(prev?'hora-'+prev.k:null,next?'hora-'+next.k:null);
@@ -695,6 +763,9 @@ function route(){
   else if((m=h.match(/^co-([a-z]+)$/))) vColl(m[1]);
   else if(h==='quaere') vSearch();
   else if(h==='horarium') vHorarium();
+  else if(h==='biblia') vBiblia();
+  else if((m=h.match(/^lib-(\d+)$/))) vLiber(+m[1]);
+  else if((m=h.match(/^lib-(\d+)-(\d+)$/))) vCaput(+m[1],+m[2],hl);
   else if((m=h.match(/^hora-([a-z]+)$/))) vHora(m[1]);
   else vHome();
 }

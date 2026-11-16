@@ -200,6 +200,17 @@ body.lang-en .hr-rub .en{opacity:1}
 .lecbar button.on{background:var(--red);color:var(--bg)}
 .lecbar .lbl{font-variant-caps:all-small-caps;letter-spacing:.12em;color:var(--ink3);font-size:14px}
 
+
+.filters{margin:0 0 6px}
+.jump.f{margin:6px 0;justify-content:flex-start;gap:6px}
+.jump.f button{font-size:15px;padding:4px 10px}
+.jump.f select{font:inherit;font-size:15px;color:var(--ink2);background:transparent;border:1px solid var(--rule);border-radius:20px;padding:4px 10px;max-width:180px;-webkit-appearance:none;appearance:none}
+.res.goto{background:var(--card);border:1px solid var(--rule);border-radius:4px;margin:6px 0 4px;padding:10px 12px}
+
+
+.ftog{display:flex;width:100%;align-items:center;justify-content:space-between;padding:4px 4px 8px;color:var(--ink3);font-size:15px;font-style:italic}
+.ftog .car{font-style:normal;font-variant-caps:all-small-caps;letter-spacing:.12em;color:var(--red)}
+
 /* search */
 .res{padding:12px 4px;border-bottom:1px solid var(--rule);display:block}
 .res:active{background:var(--rule)}
@@ -306,7 +317,7 @@ const S={lang:store.get('lang','both'),light:store.get('light','auto'),fs:store.
 /* ---------- helpers ---------- */
 function roman(n){const m=[[100,'C'],[90,'XC'],[50,'L'],[40,'XL'],[10,'X'],[9,'IX'],[5,'V'],[4,'IV'],[1,'I']];let s='';for(const[v,r]of m)while(n>=v){s+=r;n-=v}return s}
 const esc=s=>String(s).replace(/[&<>"]/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c]));
-function norm(s){return s.toLowerCase().replace(/æ/g,'ae').replace(/œ/g,'oe').normalize('NFD').replace(/[̀-ͯ]/g,'').replace(/j/g,'i').replace(/[’']/g,"'")}
+function norm(s){return s.toLowerCase().replace(/ch(?=ar)/g,'c').replace(/æ/g,'ae').replace(/œ/g,'oe').normalize('NFD').replace(/[̀-ͯ]/g,'').replace(/j/g,'i').replace(/[’']/g,"'")}
 const HEBL={Aleph:'א',Beth:'ב',Ghimel:'ג',Daleth:'ד',He:'ה',Vau:'ו',Zain:'ז',Heth:'ח',Teth:'ט',Jod:'י',Caph:'כ',Lamed:'ל',Mem:'מ',Nun:'נ',Samech:'ס',Ain:'ע',Phe:'פ',Sade:'צ',Coph:'ק',Res:'ר',Sin:'ש',Tau:'ת'};
 const PS=K.ps, PS_=K.ps, CA=K.ca, OR=K.or, CO=K.co;
 const byId=(a,id)=>a.find(x=>x.id===id);
@@ -670,20 +681,31 @@ function vHora(k){
 }
 
 /* ---------- search ---------- */
-let IDX=null, pendingQ='';
+let IDX=null, BIDX=null, BIDXP=null, pendingQ='';
 function buildIdx(){
   IDX=[];
   PS.forEach(p=>{
-    IDX.push({k:'t',href:`ps-${p.n}`,ref:`Psalmus ${roman(p.n)} · titulus`,la:p.tl||'',en:p.te||'',n:norm((p.tl||'')+' '+(p.te||''))});
-    p.v.forEach(v=>IDX.push({href:`ps-${p.n}`,hl:'v'+v[0],ref:`Ps. ${p.n}, ${v[0]}`,la:v[1],en:v[2],nl:norm(v[1]),ne:norm(v[2])}));
+    IDX.push({s:'ps',k:'t',href:`ps-${p.n}`,ref:`Psalmus ${roman(p.n)} · titulus`,la:p.tl||'',en:p.te||'',nl:norm(p.tl||''),ne:norm(p.te||'')});
+    p.v.forEach(v=>IDX.push({s:'ps',href:`ps-${p.n}`,hl:'v'+v[0],ref:`Ps. ${p.n}, ${v[0]}`,la:v[1],en:v[2],nl:norm(v[1]),ne:norm(v[2])}));
   });
-  CA.forEach(c=>c.v.forEach(v=>IDX.push({href:`ca-${c.id}`,hl:'v'+v[0],ref:`${c.name} · ${c.ref.split(',')[0]}, ${v[0]}`,la:v[1],en:v[2],nl:norm(v[1]),ne:norm(v[2])})));
-  OR.forEach(o=>o.la.forEach((la,i)=>IDX.push({href:`or-${o.id}`,hl:'b'+i,ref:o.name,la:la.replace(/^[~]|^(V|R)\. /,''),en:o.en[i].replace(/^[~]|^(V|R)\. /,''),nl:norm(o.name+' '+la),ne:norm(o.sub+' '+o.en[i])})));
+  CA.forEach(c=>c.v.forEach(v=>IDX.push({s:'ca',href:`ca-${c.id}`,hl:'v'+v[0],ref:`${c.name} · ${c.ref.split(',')[0]}, ${v[0]}`,la:v[1],en:v[2],nl:norm(v[1]),ne:norm(v[2])})));
+  OR.forEach(o=>o.la.forEach((la,i)=>IDX.push({s:'or',href:`or-${o.id}`,hl:'b'+i,ref:o.name,la:la.replace(/^[~]|^(V|R)\. /,''),en:o.en[i].replace(/^[~]|^(V|R)\. /,''),nl:norm(o.name+' '+la),ne:norm(o.sub+' '+o.en[i])})));
+}
+function buildBible(onProg){
+  if(BIDX) return Promise.resolve(BIDX);
+  if(BIDXP) return BIDXP;
+  let done=0; const ids=BIB.map((_,i)=>i).filter(i=>i!==20);
+  BIDXP=Promise.all(ids.map(i=>loadBook(i).then(B=>{done++;onProg&&onProg(done,ids.length);return [i,B]}))).then(all=>{
+    const a=[];
+    all.sort((x,y)=>x[0]-y[0]).forEach(([i,B])=>B.forEach((vs,ci)=>vs.forEach(v=>a.push({s:'bib',b:i,t:BIB[i][3],href:`lib-${i}-${ci+1}`,hl:'v'+v[0],ref:`${BIB[i][0]} ${ci+1}, ${v[0]}`,la:v[1],en:v[2],nl:norm(v[1]),ne:norm(v[2])}))));
+    return BIDX=a;
+  }).catch(e=>{BIDXP=null;throw e});
+  return BIDXP;
 }
 function qRegex(tok){
   let r='';for(let i=0;i<tok.length;i++){const c=tok[i],d=tok.slice(i,i+2);
     if(d==='ae'){r+='(?:ae|æ|Æ)';i++;continue} if(d==='oe'){r+='(?:oe|œ|Œ)';i++;continue}
-    if(c==='i')r+='[iíjJ]';else if(c==='e')r+='[eëéè]';else if(c==='a')r+='[aáà]';else if(c==='o')r+='[oóò]';else if(c==='u')r+='[uúù]';else r+=c.replace(/[.*+?^${}()|[\]\\]/g,'\\$&');}
+    if(c==='c'&&tok.slice(i+1,i+3)==='ar')r+='ch?';else if(c==='i')r+='[iíjJ]';else if(c==='e')r+='[eëéè]';else if(c==='a')r+='[aáà]';else if(c==='o')r+='[oóò]';else if(c==='u')r+='[uúù]';else r+=c.replace(/[.*+?^${}()|[\]\\]/g,'\\$&');}
   return r;
 }
 function mark(text,toks){
@@ -697,45 +719,99 @@ function snip(text,toks){
   return (i>0?'… ':'')+mark(text.slice(i,i+170),toks)+'…';
 }
 const HEB2V=(()=>{const m={};PS.forEach(p=>p.h.split('–').forEach(x=>{m[x]=m[x]||p.n}));return m})();
+/* book reference: "John 3:16", "Joannes 3", "1 Cor 13", "Gen 1" */
+function bookRef(raw){
+  const m=raw.match(/^\s*(.+?)\.?\s+(\d{1,3})(?:\s*[:,.]\s*(\d{1,3}))?\s*$/); if(!m) return null;
+  const q=norm(m[1]).replace(/\s+/g,' ').replace(/^(1|i) /,'1 ').replace(/^(2|ii) /,'2 ').replace(/^(3|iii) /,'3 ').replace(/^(4|iv) /,'4 ');
+  const cands=[];
+  BIB.forEach((b,i)=>{
+    const la=norm(b[0]).replace(/^iv /,'4 ').replace(/^iii /,'3 ').replace(/^ii /,'2 ').replace(/^i /,'1 ');
+    const en=norm(b[1]).replace(/\s*\(.*\)/,''), en2=(norm(b[1]).match(/\((.*)\)/)||[])[1];
+    for(const n of [la,en,en2,la.replace(/^ad /,''),la.replace(/^(\d) ad /,'$1 ')]) if(n&&n.startsWith(q)){cands.push(i);break}
+  });
+  if(!cands.length) return null;
+  const i=cands[0], c=+m[2], v=m[3]?+m[3]:null;
+  if(i===20){ if(!PS[c-1]) return null; return {href:`ps-${c}`,hl:v?'v'+v:null,label:`Psalmus ${roman(c)}${v?', '+v:''}`} }
+  if(c<1||c>BIB[i][2]) return null;
+  return {href:`lib-${i}-${c}`,hl:v?'v'+v:null,label:`${BIB[i][0]} ${c}${v?', '+v:''} · ${BIB[i][1].replace(/\s*\(.*\)/,'')}`};
+}
+const SF={src:store.get('sf.src','all'),test:store.get('sf.test','all'),book:store.get('sf.book',-1),lang:store.get('sf.lang','both')};
 function vSearch(){
   setBar('Quaere','home'); if(!IDX) buildIdx();
-  main.innerHTML=`<div class="view"><label class="search-line" style="margin-top:6px"><svg viewBox="0 0 24 24"><circle cx="10.5" cy="10.5" r="6.5"/><path d="M15.5 15.5L21 21"/></svg>
-   <input id="sq" type="search" placeholder="e.g. miserere · the Lord is my light · 90" enterkeyhint="search" autocomplete="off"></label><div id="sr"></div></div>`;
-  const q=$('#sq'),out=$('#sr'); let tm;
+  const chip=(k,v,l)=>`<button data-k="${k}" data-v="${v}" class="${String(SF[k])===String(v)?'on':''}">${l}</button>`;
+  main.innerHTML=`<div class="view"><label class="search-line" style="margin-top:6px;margin-bottom:12px"><svg viewBox="0 0 24 24"><circle cx="10.5" cy="10.5" r="6.5"/><path d="M15.5 15.5L21 21"/></svg>
+   <input id="sq" type="search" placeholder="miserere · lord is my light · John 3:16" enterkeyhint="search" autocomplete="off"></label>
+   <button class="ftog" id="ftog"><span id="fsum"></span><span class="car">Filtra ▾</span></button>
+   <div class="filters" id="filters" style="display:none">
+    <div class="jump f">${chip('src','all','Omnia')}${chip('src','ps','Psalmi')}${chip('src','bib','Biblia')}${chip('src','ca','Cantica')}${chip('src','or','Orationes')}</div>
+    <div class="jump f" id="fBib">${chip('test','all','Utrumque Test.')}${chip('test','vt','Vetus')}${chip('test','nt','Novum')}
+      <select id="fBook"><option value="-1">Omnes libri</option>${BIB.map((b,i)=>i===20?'':`<option value="${i}">${esc(b[0])}</option>`).join('')}</select></div>
+    <div class="jump f">${chip('lang','both','Latine & English')}${chip('lang','la','Latine')}${chip('lang','en','English')}</div>
+   </div><div id="sr"></div></div>`;
+  const q=$('#sq'),out=$('#sr'),fBib=$('#fBib'),fBook=$('#fBook'); let tm;
+  fBook.value=String(SF.book);
+  const fsum=()=>{const src={all:'Omnia',ps:'Psalmi',bib:'Biblia',ca:'Cantica',or:'Orationes'}[SF.src];const bibOn=SF.src==='all'||SF.src==='bib';
+    const sc=bibOn&&SF.book>=0?BIB[SF.book][0]:bibOn&&SF.test!=='all'?(SF.test==='vt'?'Vetus Test.':'Novum Test.'):src;
+    return sc+' · '+{both:'Latine & English',la:'Latine',en:'English'}[SF.lang]};
+  $('#ftog').onclick=()=>{const f=$('#filters');const on=f.style.display==='none';f.style.display=on?'':'none';$('#ftog .car').textContent=on?'Filtra ▴':'Filtra ▾'};
+  const syncF=()=>{$('#fsum').textContent=fsum();const bibOn=SF.src==='all'||SF.src==='bib';fBib.style.display=bibOn?'':'none';
+    main.querySelectorAll('.f button').forEach(b=>b.classList.toggle('on',String(SF[b.dataset.k])===b.dataset.v));
+    if(SF.book>=0){const t=BIB[SF.book][3];if(SF.test!=='all'&&SF.test!==t){SF.book=-1;fBook.value='-1'}}};
+  const saveF=()=>{for(const k in SF) store.set('sf.'+k,SF[k])};
+  main.querySelectorAll('.f button').forEach(b=>b.onclick=()=>{SF[b.dataset.k]=b.dataset.v;if(b.dataset.k==='test'){SF.book=-1;fBook.value='-1'}syncF();saveF();run()});
+  fBook.onchange=()=>{SF.book=+fBook.value;if(SF.book>=0){SF.test='all'}syncF();saveF();run()};
+  syncF();
   q.value=pendingQ||store.get('q',''); pendingQ='';
+  let runId=0;
   const run=()=>{
-    const raw=q.value.trim(); store.set('q',raw);
-    if(!raw){out.innerHTML=`<div class="empty">Search Latin or English.<br>Type a number for a psalm.</div>`;return}
+    const my=++runId, raw=q.value.trim(); store.set('q',raw);
+    if(!raw){out.innerHTML=`<div class="empty">Search Latin or English.<br>Type a number for a psalm, or a reference like “Joannes 3, 16”.</div>`;return}
+    const wantBib=SF.src==='all'||SF.src==='bib';
     let h='';
     const num=raw.match(/^(?:ps\.?\s*)?(\d{1,3})$/i);
     if(num){const n=+num[1];
       if(PS[n-1]) h+=`<a class="res" href="#ps-${n}"><div class="ref">Psalmus ${roman(n)}${PS[n-1].h!==String(n)?' · Hebrew '+PS[n-1].h:''}</div><div class="sn">${esc(PS[n-1].i)}</div></a>`;
       const v=HEB2V[String(n)]; if(v&&v!==n) h+=`<a class="res" href="#ps-${v}"><div class="ref">Hebrew / modern Ps ${n} = Vulgate Psalmus ${roman(v)}</div><div class="sn">${esc(PS[v-1].i)}</div></a>`;
+      out.innerHTML=h; wire(); return;
     }
+    const ref=bookRef(raw);
+    if(ref) h+=`<a class="res goto" href="#${ref.href}" data-hl="${ref.hl||''}"><div class="ref">Vade ad locum ›</div><div class="sn">${esc(ref.label)}</div></a>`;
+    if(ref){out.innerHTML=h;wire();return}
     const toks=norm(raw).split(/\s+/).filter(t=>t.length>1||/\d/.test(t));
-    if(toks.length&&!num){
+    if(!toks.length){out.innerHTML=h;wire();return}
+    const pool=()=>{let a=IDX.filter(e=>SF.src==='all'||e.s===SF.src);
+      if(wantBib&&BIDX){let b=BIDX;if(SF.book>=0)b=b.filter(e=>e.b===SF.book);else if(SF.test!=='all')b=b.filter(e=>e.t===SF.test);
+        if(SF.book>=0||SF.test!=='all') a=SF.src==='all'?b:b; else a=a.concat(b);}
+      return a};
+    const exec=()=>{
       const res=toks.map(t=>new RegExp('(^|[^a-z])'+t.replace(/[.*+?^${}()|[\]\\]/g,'\\$&')));
       const phrase=norm(raw).replace(/\s+/g,' ');
       const hit=n=>res.every(r=>r.test(n));
-      let r=[];
-      for(const e of IDX){
-        if(e.k==='t'){ if(e.n.trim()&&hit(e.n)) r.push([e,'t',1]); continue }
-        const L=hit(e.nl), E=hit(e.ne);
-        if(L||E){const w=L?'la':'en';r.push([e,w,(w==='la'?e.nl:e.ne).includes(phrase)?0:1])}
-        if(r.length>=400) break;
+      let r=[], total=0;
+      for(const e of pool()){
+        const L=SF.lang!=='en'&&e.nl&&hit(e.nl), E=SF.lang!=='la'&&e.ne&&hit(e.ne);
+        if(L||E){total++; if(r.length<600){const w=L?'la':'en';r.push([e,w,(w==='la'?e.nl:e.ne).includes(phrase)?0:1])}}
       }
       r.sort((a,b)=>a[2]-b[2]); r=r.slice(0,300);
-      h+=`<div class="count">${r.length>=300?'300+':r.length} ${r.length===1?'locus':'loci'}</div>`;
-      h+=r.map(([e,w])=>`<a class="res" href="#${e.href}" data-hl="${e.hl||''}"><div class="ref">${esc(e.ref)}</div><div class="sn ${w==='en'?'en':''}">${snip(w==='en'?e.en:(w==='t'?(e.la||e.en):e.la),toks)}</div></a>`).join('');
-      if(!r.length) h+=`<div class="empty">Nihil inventum.</div>`;
+      let x=h+`<div class="count">${total} ${total===1?'locus':'loci'}${total>300?' · showing 300 — narrow with the filters':''}</div>`;
+      x+=r.map(([e,w])=>`<a class="res" href="#${e.href}" data-hl="${e.hl||''}"><div class="ref">${esc(e.ref)}</div><div class="sn ${w==='en'?'en':''}">${snip(w==='en'?e.en:e.la,toks)}</div></a>`).join('');
+      if(!total) x+=`<div class="empty">Nihil inventum.</div>`;
+      out.innerHTML=x; wire();
+    };
+    if(wantBib&&!BIDX){
+      out.innerHTML=h+`<div class="count" id="bprog">Biblia legitur…</div>`;
+      buildBible((d,n)=>{const p=$('#bprog');if(p&&my===runId)p.textContent=`Biblia legitur… ${d} / ${n}`})
+        .then(()=>{if(my===runId)exec()}).catch(()=>{if(my===runId){out.innerHTML=h+`<div class="empty">Could not load the Bible for searching. Check your connection.</div>`}});
+      return;
     }
-    out.innerHTML=h;
-    out.querySelectorAll('.res').forEach(a=>a.addEventListener('click',ev=>{const hl=a.dataset.hl;if(hl){ev.preventDefault();pendingHL=hl;go(a.getAttribute('href').slice(1))}}));
+    exec();
   };
-  q.addEventListener('input',()=>{clearTimeout(tm);tm=setTimeout(run,180)});
+  function wire(){out.querySelectorAll('.res').forEach(a=>a.addEventListener('click',ev=>{const hl=a.dataset.hl;if(hl){ev.preventDefault();pendingHL=hl;go(a.getAttribute('href').slice(1))}}))}
+  q.addEventListener('input',()=>{clearTimeout(tm);tm=setTimeout(run,250)});
   run(); if(!q.value) setTimeout(()=>q.focus(),300);
 }
 let pendingHL=null;
+
 
 /* ---------- swipe ---------- */
 let swP=null,swN=null;

@@ -1,0 +1,575 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<title>Kloster</title>
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-title" content="Kloster">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<meta name="theme-color" content="#e9dcbf">
+<link rel="apple-touch-icon" href="icon.png">
+<link rel="icon" href="icon.png">
+<link rel="manifest" href="manifest.json">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=EB+Garamond:ital,wght@0,400;0,500;0,600;1,400;1,500&family=UnifrakturMaguntia&display=swap" rel="stylesheet">
+<style>
+:root{
+  --bg:#ebdfc4; --bg2:#dfcda6; --ink:#2b1c12; --ink2:#5a4632; --ink3:#8a7458;
+  --red:#a1261a; --red2:#c0503c; --gold:#a07a2c; --rule:rgba(90,60,30,.22);
+  --card:rgba(255,250,236,.38); --shadow:rgba(60,35,10,.18);
+  --fs:19px;
+  --top:env(safe-area-inset-top,0px); --bot:env(safe-area-inset-bottom,0px);
+  --frak:'UnifrakturMaguntia', 'Old English Text MT', serif;
+  --serif:'EB Garamond', Garamond, 'Times New Roman', serif;
+}
+body.nox{
+  --bg:#15100b; --bg2:#0d0906; --ink:#dccaa6; --ink2:#a99572; --ink3:#7a6a50;
+  --red:#c25a43; --red2:#d77a60; --gold:#b48e45; --rule:rgba(220,190,140,.13);
+  --card:rgba(255,230,180,.035); --shadow:rgba(0,0,0,.5);
+}
+*{box-sizing:border-box;-webkit-tap-highlight-color:transparent}
+html,body{margin:0;height:100%}
+body{background:var(--bg);color:var(--ink);font-family:var(--serif);font-size:var(--fs);line-height:1.5;
+  -webkit-font-smoothing:antialiased;overflow-x:hidden;transition:background .5s,color .5s}
+/* parchment */
+body::before{content:"";position:fixed;inset:0;z-index:-1;pointer-events:none;
+  background:
+   radial-gradient(ellipse at 50% 40%, transparent 45%, var(--bg2) 100%),
+   url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' width='300' height='300'><filter id='n'><feTurbulence type='fractalNoise' baseFrequency='.9' numOctaves='3' stitchTiles='stitch'/><feColorMatrix values='0 0 0 0 .35  0 0 0 0 .22  0 0 0 0 .08  0 0 0 .55 0'/></filter><rect width='300' height='300' filter='url(%23n)' opacity='.33'/></svg>"),
+   url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' width='900' height='900'><filter id='m'><feTurbulence type='fractalNoise' baseFrequency='.006' numOctaves='4' seed='7'/><feColorMatrix values='0 0 0 0 .45  0 0 0 0 .3  0 0 0 0 .1  0 0 0 .9 -.25'/></filter><rect width='900' height='900' filter='url(%23m)' opacity='.5'/></svg>");
+  background-size:cover,300px 300px,900px 900px}
+body.nox::before{opacity:.45}
+
+button{font:inherit;color:inherit;background:none;border:0;padding:0;cursor:pointer}
+a{color:inherit;text-decoration:none}
+.sc{font-variant-caps:all-small-caps;letter-spacing:.08em}
+.red{color:var(--red)}
+.frak{font-family:var(--frak);font-weight:400}
+
+/* top bar */
+#bar{position:fixed;top:0;left:0;right:0;z-index:20;padding:calc(var(--top) + 6px) 10px 6px;
+  display:flex;align-items:center;gap:6px;background:linear-gradient(var(--bg) 70%,transparent);
+  transition:opacity .3s,transform .3s}
+#bar.hide{opacity:0;transform:translateY(-100%);pointer-events:none}
+#bar .t{flex:1;text-align:center;font-family:var(--frak);font-size:22px;color:var(--ink);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.ib{width:42px;height:42px;display:grid;place-items:center;border-radius:50%;color:var(--ink2)}
+.ib:active{background:var(--rule)}
+.ib svg{width:22px;height:22px;stroke:currentColor;fill:none;stroke-width:1.5;stroke-linecap:round;stroke-linejoin:round}
+.ib.off{visibility:hidden}
+
+main{max-width:680px;margin:0 auto;padding:calc(var(--top) + 64px) 22px calc(var(--bot) + 90px)}
+.view{animation:fade .45s ease}
+@keyframes fade{from{opacity:0;transform:translateY(6px)}to{opacity:1;transform:none}}
+
+/* ornaments */
+.orn{display:flex;align-items:center;gap:12px;color:var(--red);margin:14px auto 18px;max-width:260px}
+.orn::before,.orn::after{content:"";flex:1;height:1px;background:linear-gradient(90deg,transparent,var(--red),transparent);opacity:.6}
+.orn span{font-size:15px}
+
+/* home */
+.home-h{text-align:center;margin-top:8px}
+.home-h h1{font-family:var(--frak);font-weight:400;font-size:min(23vw,120px);line-height:1;margin:0;color:var(--ink);letter-spacing:.01em}
+.date{text-align:center;color:var(--ink2);font-style:italic;font-size:16px}
+.date b{font-style:normal;color:var(--red);font-weight:500}
+.search-line{display:flex;align-items:center;gap:10px;margin:22px 4px 26px;border-bottom:1px solid var(--rule);padding:6px 4px}
+.search-line svg{width:18px;height:18px;stroke:var(--ink3);fill:none;stroke-width:1.6}
+.search-line input{flex:1;border:0;background:none;font:inherit;font-style:italic;color:var(--ink);outline:none;font-size:18px}
+.search-line input::-webkit-search-cancel-button{-webkit-appearance:none;display:none}
+.search-line input::placeholder{color:var(--ink3)}
+.big{display:flex;align-items:center;gap:16px;padding:16px 6px;border-bottom:1px solid var(--rule)}
+.big:active{background:var(--rule)}
+.big .ini{font-family:var(--frak);color:var(--red);font-size:54px;line-height:.9;width:50px;text-align:center}
+.big .nm{font-size:23px;font-weight:500;letter-spacing:.01em}
+.big .sb{font-size:15px;color:var(--ink2);font-style:italic}
+.big .ar{margin-left:auto;color:var(--ink3);font-size:22px}
+.sect{margin:30px 0 6px;text-align:center;font-variant-caps:all-small-caps;letter-spacing:.14em;color:var(--red);font-size:17px}
+.row{display:flex;align-items:baseline;gap:14px;padding:11px 6px;border-bottom:1px solid var(--rule)}
+.row:active{background:var(--rule)}
+.row .no{min-width:58px;text-align:right;color:var(--red);font-variant-caps:all-small-caps;letter-spacing:.06em;font-size:18px}
+.row .tx{flex:1;min-width:0}
+.row .la{font-size:19px}
+.row .en{font-size:14.5px;color:var(--ink2);font-style:italic;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.row .hb{font-size:12px;color:var(--ink3)}
+.hint{margin-top:8px;padding:14px 16px;background:var(--card);border:1px solid var(--rule);border-radius:3px;font-size:16px;display:flex;gap:10px;align-items:center}
+.hint .lbl{font-variant-caps:all-small-caps;letter-spacing:.1em;color:var(--red);font-size:14px}
+.hint .v{font-size:19px}
+.hint .ar{margin-left:auto;color:var(--ink3)}
+
+/* index */
+.idx-h{text-align:center;margin-bottom:6px}
+.idx-h h2,.rd-h h2{font-family:var(--frak);font-weight:400;font-size:46px;margin:0;line-height:1.1}
+.numr{font-family:var(--serif)!important;font-weight:500!important;letter-spacing:.06em;font-size:50px!important;color:var(--ink)}
+.jump{display:flex;gap:6px;flex-wrap:wrap;justify-content:center;margin:14px 0 4px}
+.jump button{padding:5px 11px;border:1px solid var(--rule);border-radius:20px;font-variant-caps:all-small-caps;letter-spacing:.06em;color:var(--ink2);font-size:16px}
+.jump button:active{background:var(--rule)}
+.quin{margin:34px 0 4px;text-align:center}
+.quin .q1{font-family:var(--frak);font-size:28px;color:var(--red)}
+.quin .q2{font-size:14px;color:var(--ink3);font-style:italic}
+
+/* reader */
+.rd-h{text-align:center;margin:4px 0 10px}
+.rd-h .num{font-variant-caps:all-small-caps;letter-spacing:.2em;color:var(--red);font-size:16px}
+.rd-h .inc{font-style:italic;color:var(--ink2);font-size:18px;margin-top:2px}
+.rd-h .hb{font-size:13px;color:var(--ink3);margin-top:2px}
+.title{color:var(--red);font-style:italic;font-size:.82em;text-align:center;margin:0 6% 16px;line-height:1.4}
+.title .en{display:block;color:var(--red2);opacity:.85;font-size:.95em}
+body.lang-la .title .en,body.lang-en .title .la{display:none}
+body.lang-en .title .en{display:inline;opacity:1;color:var(--red)}
+body.noTitles .title{display:none}
+.v{margin:0 0 .55em;hyphens:auto;-webkit-hyphens:auto;text-align:left;text-wrap:pretty}
+.v sup{color:var(--red);font-size:.55em;margin-right:.35em;vertical-align:.55em;font-variant-numeric:oldstyle-nums;font-weight:500}
+.v .en{display:block;font-style:italic;color:var(--ink2);font-size:.86em;margin-top:.1em}
+body.lang-la .v .en{display:none}
+body.lang-en .v .la{display:none}
+body.lang-en .v .en{display:inline;font-style:normal;color:var(--ink);font-size:1em}
+.init{float:left;font-family:var(--frak);color:var(--red);font-size:3.9em;line-height:.86;margin:.04em .1em -.05em 0;font-style:normal}
+body.lang-both .v .en .init{float:none;font:inherit;color:inherit;margin:0;line-height:inherit;font-size:inherit}
+body.lang-la .v .en .init,body.lang-en .v .la .init{float:none}
+.secH{text-align:center;margin:1.4em 0 .5em;color:var(--red)}
+.secH .f{font-family:var(--frak);font-size:1.5em}
+.secH .h{font-size:1.2em;margin-left:.4em;font-family:serif}
+.hebnote{text-align:center;color:var(--ink3);font-size:.75em;font-variant-caps:all-small-caps;letter-spacing:.1em;margin:1em 0 .6em}
+.gp{margin-top:1.1em;padding-top:.9em;border-top:1px solid var(--rule);font-size:.92em}
+.gp .r{color:var(--red);font-style:italic}
+body.noGloria .gp{display:none}
+.hit{background:rgba(196,140,40,.32);border-radius:2px;transition:background 2s}
+.flash{animation:flash 2.6s ease}
+@keyframes flash{0%,40%{background:rgba(196,140,40,.3)}100%{background:transparent}}
+.pn{display:flex;justify-content:space-between;gap:10px;margin-top:34px;border-top:1px solid var(--rule);padding-top:14px}
+.pn a{display:flex;flex-direction:column;padding:6px 8px;max-width:48%}
+.pn a .k{font-variant-caps:all-small-caps;letter-spacing:.12em;color:var(--red);font-size:15px}
+.pn a .s{font-style:italic;color:var(--ink2);font-size:15px}
+.pn a.nx{text-align:right;margin-left:auto}
+.coll-ps{margin-top:40px}
+.coll-ps:first-of-type{margin-top:10px}
+.coll-ps h3{text-align:center;font-family:var(--frak);font-weight:400;font-size:30px;margin:0}
+.coll-ps .inc{text-align:center;font-style:italic;color:var(--ink2);margin-bottom:12px;font-size:17px}
+
+/* prayers */
+.pr-blk{margin:0 0 .9em}
+.pr-blk .la{display:block}
+.pr-blk .en{display:block;font-style:italic;color:var(--ink2);font-size:.86em;margin-top:.2em}
+body.lang-la .pr-blk .en{display:none}
+body.lang-en .pr-blk .la{display:none}
+body.lang-en .pr-blk .en{font-style:normal;color:var(--ink);font-size:1em}
+.verse .pr-blk{white-space:pre-line;text-align:left}
+.prose .pr-blk{text-align:left;hyphens:auto;-webkit-hyphens:auto}
+.lines .pr-blk{margin:0 0 .45em;padding-left:1.2em;text-indent:-1.2em}
+.vr-sym{color:var(--red);font-family:serif;margin-right:.3em;font-style:normal}
+.rub{color:var(--red);font-style:italic}
+.pr-blk.rubric{margin:.6em 0 .2em}
+.rubric .la,.rubric .en{color:var(--red);font-style:italic}
+.rubric.head .la,.rubric.head .en{font-style:normal;font-variant-caps:all-small-caps;letter-spacing:.1em;text-align:center;margin-top:.6em}
+.note{font-size:.78em;color:var(--ink3);font-style:italic;text-align:center;margin-top:1.4em}
+.badge{display:inline-block;font-size:12px;font-variant-caps:all-small-caps;letter-spacing:.12em;color:var(--bg);background:var(--red);padding:0 7px;border-radius:9px;margin-left:6px;vertical-align:2px;font-style:normal}
+
+/* search */
+.res{padding:12px 4px;border-bottom:1px solid var(--rule);display:block}
+.res:active{background:var(--rule)}
+.res .ref{font-variant-caps:all-small-caps;letter-spacing:.08em;color:var(--red);font-size:15px}
+.res .sn{font-size:17px}
+.res .sn.en{font-style:italic;color:var(--ink2);font-size:15.5px}
+mark{background:rgba(196,140,40,.32);color:inherit;border-radius:2px;padding:0 1px}
+.empty{text-align:center;color:var(--ink3);font-style:italic;margin-top:40px}
+.count{text-align:center;color:var(--ink3);font-size:14px;font-style:italic;margin:6px 0 4px}
+
+/* settings sheet */
+#veil{position:fixed;inset:0;background:rgba(20,10,0,.35);z-index:40;opacity:0;pointer-events:none;transition:opacity .3s}
+#veil.on{opacity:1;pointer-events:auto}
+#sheet{position:fixed;left:0;right:0;bottom:0;z-index:41;background:var(--bg);border-top:1px solid var(--rule);
+  padding:18px 22px calc(var(--bot) + 24px);transform:translateY(105%);transition:transform .35s cubic-bezier(.2,.8,.2,1);
+  box-shadow:0 -10px 40px var(--shadow);max-width:680px;margin:0 auto;border-radius:14px 14px 0 0}
+#sheet.on{transform:none}
+#sheet h3{font-family:var(--frak);font-weight:400;text-align:center;font-size:30px;margin:0 0 10px}
+.opt{display:flex;align-items:center;justify-content:space-between;padding:10px 0;border-bottom:1px solid var(--rule);gap:12px}
+.opt .l{font-size:18px}
+.opt .l small{display:block;color:var(--ink3);font-style:italic;font-size:13px}
+.seg{display:flex;border:1px solid var(--rule);border-radius:20px;overflow:hidden}
+.seg button{padding:5px 12px;font-size:15px;color:var(--ink2);font-variant-caps:all-small-caps;letter-spacing:.06em}
+.seg button.on{background:var(--red);color:var(--bg)}
+.colophon{text-align:center;font-size:12.5px;color:var(--ink3);font-style:italic;margin-top:14px;line-height:1.4}
+
+/* splash */
+#splash{position:fixed;inset:0;z-index:100;display:grid;place-items:center;background:var(--bg);transition:opacity .55s ease}
+#splash::before{content:"";position:absolute;inset:0;background:inherit;pointer-events:none}
+#splash .pg{position:absolute;inset:0;pointer-events:none;
+  background:radial-gradient(ellipse at 50% 45%, transparent 35%, rgba(110,70,25,.35) 100%)}
+#splash.out{opacity:0;pointer-events:none}
+#splash svg{width:min(84vw,560px);overflow:visible;position:relative;will-change:transform}
+#splash .sub{position:absolute;left:0;right:0;top:calc(50% + min(16vw,104px));text-align:center;color:var(--red);
+  font-variant-caps:all-small-caps;letter-spacing:.32em;font-size:15px;opacity:0;transition:opacity .5s}
+#splash .sub.on{opacity:.9}
+#splash .ruling{stroke:rgba(120,80,40,.28);stroke-width:5;stroke-dasharray:6000;stroke-dashoffset:6000;transition:stroke-dashoffset .6s ease}
+#splash .ruling.on{stroke-dashoffset:0}
+#splash .ink{fill:#1b0f07}
+#splash .ink.dry{fill:#2f1d11;transition:fill .8s}
+body.nox #splash .ink{fill:#e6d3ad}
+body.nox #splash .ink.dry{fill:#d7c39c}
+</style>
+</head>
+<body class="lang-both">
+
+<div id="splash" aria-hidden="true">
+  <div class="pg"></div>
+  <svg id="quill" viewBox="-80 -1700 5845 2150" xmlns="http://www.w3.org/2000/svg">
+    <defs>
+      <filter id="bleed" x="-5%" y="-5%" width="110%" height="110%">
+        <feTurbulence type="fractalNoise" baseFrequency=".035" numOctaves="2" seed="3" result="t"/>
+        <feDisplacementMap in="SourceGraphic" in2="t" scale="14"/>
+      </filter>
+      <mask id="m0" maskUnits="userSpaceOnUse" x="-400" y="-800" width="2400" height="2800"><path class="mk" d="M1163 725Q1172 730 1172.5 739.5Q1173 749 1162 754Q1097 787 1046 923Q1005 1030 920.0 1064.5Q835 1099 755 1045Q674 991 672.0 876.5Q670 762 734 677Q869 489 845.0 369.5Q821 250 695 136Q543 -4 438.5 -25.5Q334 -47 232 88Q145 204 79 153Q54 135 40.5 149.0Q27 163 47 184Q56 193 138.0 262.0Q220 331 288.0 331.0Q356 331 442 226Q495 160 544.0 136.0Q593 112 653 163Q710 212 650.5 314.5Q591 417 483 537Q386 644 339.5 778.5Q293 913 320 1009Q377 1217 573.5 1337.5Q770 1458 997 1455Q1260 1457 1427.0 1299.5Q1594 1142 1602 917Q1605 805 1535.0 720.5Q1465 636 1364 582Q1333 566 1322.0 585.0Q1311 604 1338 619Q1440 682 1466.5 751.0Q1493 820 1490 928Q1484 1113 1349.0 1258.5Q1214 1404 995 1412Q726 1409 601.0 1226.0Q476 1043 605 842Q612 830 624 833Q636 838 635 852Q626 942 662.5 1042.0Q699 1142 822.5 1201.0Q946 1260 1079.0 1211.0Q1212 1162 1269 1050Q1313 962 1336.5 908.5Q1360 855 1390 859Q1413 863 1418.5 846.0Q1424 829 1401 817L1165 682Q1155 676 1155.0 667.0Q1155 658 1166 653Q1222 623 1273.0 531.0Q1324 439 1378 301Q1449 117 1567 160Q1599 174 1609.5 156.0Q1620 138 1589 119L1351 -34Q1342 -39 1333 -34Q1238 29 1178.0 130.0Q1118 231 1078 363Q1050 455 1003.0 504.5Q956 554 898 530Q870 520 862.0 538.0Q854 556 878 569Z" fill="none" stroke="#fff" stroke-width="300" stroke-linecap="round" stroke-linejoin="round"/></mask>
+<mask id="m1" maskUnits="userSpaceOnUse" x="-400" y="-800" width="2400" height="2800"><path class="mk" d="M52 1314Q39 1328 51.5 1341.0Q64 1354 83 1336Q106 1308 130.5 1276.0Q155 1244 172 1210Q177 1200 186.5 1200.0Q196 1200 201 1208Q260 1308 365.0 1369.5Q470 1431 592 1427Q615 1426 616.0 1407.5Q617 1389 592 1389Q493 1389 433.5 1332.0Q374 1275 374 1124L373 258Q373 226 388 217L460 176Q485 167 529 224Q540 239 556.0 230.5Q572 222 555 204Q450 87 394 -26Q382 -47 358 -26Q309 37 257.0 73.5Q205 110 111 129Q95 131 94.5 143.5Q94 156 105 161Q130 170 150.5 194.5Q171 219 171 276L170 948Q170 1092 139.0 1175.0Q108 1258 52 1314Z" fill="none" stroke="#fff" stroke-width="300" stroke-linecap="round" stroke-linejoin="round"/></mask>
+<mask id="m2" maskUnits="userSpaceOnUse" x="-400" y="-800" width="2400" height="2800"><path class="mk" d="M388 -18Q373 -43 351 -18Q241 119 17 188Q-1 193 -0.5 204.0Q0 215 11 220Q75 242 75 353L72 863Q72 874 70.0 880.5Q68 887 71.5 892.5Q75 898 85 899Q351 921 558 1044Q567 1049 574.5 1047.0Q582 1045 583 1033Q600 925 689 821Q738 761 770.5 657.0Q803 553 796 484Q786 403 743.0 338.5Q700 274 645 220Q580 156 505.0 112.0Q430 68 388 -18ZM279 876 283 300Q283 285 295 279L472 169Q498 152 520 179Q615 281 606 424Q604 513 571.5 583.0Q539 653 491 707Q413 786 372 903Q370 908 363.0 911.5Q356 915 350 912Q320 901 290 893Q279 889 279 876Z" fill="none" stroke="#fff" stroke-width="300" stroke-linecap="round" stroke-linejoin="round"/></mask>
+<mask id="m3" maskUnits="userSpaceOnUse" x="-400" y="-800" width="2400" height="2800"><path class="mk" d="M113 915H12Q-3 915 -3.5 929.5Q-4 944 8 946Q73 957 116.0 1013.0Q159 1069 153 1159Q146 1301 190.0 1397.5Q234 1494 366 1451Q439 1426 499.5 1407.5Q560 1389 585 1428Q597 1452 610.0 1448.5Q623 1445 608 1406Q568 1293 510.5 1253.5Q453 1214 332 1272Q215 1326 194.5 1218.5Q174 1111 238 1078Q343 1024 365.5 952.5Q388 881 375 743L274 -309Q270 -343 253.0 -340.5Q236 -338 234 -307Q209 -1 183 304Q157 601 129 899Q128 907 125.0 911.0Q122 915 113 915Z" fill="none" stroke="#fff" stroke-width="300" stroke-linecap="round" stroke-linejoin="round"/></mask>
+<mask id="m4" maskUnits="userSpaceOnUse" x="-400" y="-800" width="2400" height="2800"><path class="mk" d="M383 815 382 255Q382 224 397 214L469 173Q490 155 539 221Q548 234 563.5 225.0Q579 216 565 201Q458 84 404 -29Q387 -50 367 -29Q311 37 263.0 70.0Q215 103 120 126Q104 129 103.0 141.0Q102 153 115 158Q182 174 181 273L180 814Q181 832 165 832H47Q33 832 29 843Q25 854 38 862Q158 947 282.5 1067.0Q407 1187 509 1295Q522 1309 534.5 1300.5Q547 1292 535 1276Q489 1219 442.5 1128.0Q396 1037 386 962Q384 952 387 947Q393 941 401 941H574Q581 941 586 936Q591 929 591 923L587 848Q585 832 570 832H397Q383 832 383 815Z" fill="none" stroke="#fff" stroke-width="300" stroke-linecap="round" stroke-linejoin="round"/></mask>
+<mask id="m5" maskUnits="userSpaceOnUse" x="-400" y="-800" width="2400" height="2800"><path class="mk" d="M340 -28Q338 -4 314.5 8.0Q291 20 275 32Q160 110 112.5 222.5Q65 335 59 461Q47 746 213 895Q272 948 349.0 981.5Q426 1015 507 1036Q532 1041 544 1011L688 673Q698 646 681 639H679L269 480Q257 474 259 461Q308 239 423.0 176.5Q538 114 652 158Q672 167 677.5 155.0Q683 143 670 137Q589 96 515.5 53.0Q442 10 384 -37Q375 -43 357.5 -41.0Q340 -39 340 -28ZM247 537Q248 529 254.0 524.5Q260 520 269 524L482 604Q497 610 491 625L369 924Q360 946 333 930Q275 896 254.0 775.0Q233 654 247 537Z" fill="none" stroke="#fff" stroke-width="300" stroke-linecap="round" stroke-linejoin="round"/></mask>
+<mask id="m6" maskUnits="userSpaceOnUse" x="-400" y="-800" width="2400" height="2800"><path class="mk" d="M392 750 391 265Q391 233 407 224L479 182Q502 168 549 231Q559 244 574.0 236.5Q589 229 574 211Q469 94 413 -19Q396 -42 376 -19Q320 46 271.5 80.0Q223 114 129 136Q111 141 111.0 152.0Q111 163 124 168Q191 179 190 283V706Q190 808 152 831Q108 860 80 810Q69 789 55.0 800.0Q41 811 56 835Q85 881 111.5 929.0Q138 977 166 1025Q183 1055 211 1036Q358 965 387 856Q390 846 399.0 843.5Q408 841 415 850L569 1027Q575 1033 583.0 1032.5Q591 1032 596 1024L701 823Q705 814 699 806L579 662Q572 655 563.5 656.0Q555 657 552 665L471 815Q467 821 458.5 822.5Q450 824 443 817L396 760Q392 756 392 750Z" fill="none" stroke="#fff" stroke-width="300" stroke-linecap="round" stroke-linejoin="round"/></mask>
+    </defs>
+    <line class="ruling" x1="-200" y1="40" x2="5885" y2="40"/>
+    <line class="ruling" x1="-200" y1="-1060" x2="5885" y2="-1060" style="opacity:.6"/>
+    <g filter="url(#bleed)"><path class="ink" d="M1163 725Q1172 730 1172.5 739.5Q1173 749 1162 754Q1097 787 1046 923Q1005 1030 920.0 1064.5Q835 1099 755 1045Q674 991 672.0 876.5Q670 762 734 677Q869 489 845.0 369.5Q821 250 695 136Q543 -4 438.5 -25.5Q334 -47 232 88Q145 204 79 153Q54 135 40.5 149.0Q27 163 47 184Q56 193 138.0 262.0Q220 331 288.0 331.0Q356 331 442 226Q495 160 544.0 136.0Q593 112 653 163Q710 212 650.5 314.5Q591 417 483 537Q386 644 339.5 778.5Q293 913 320 1009Q377 1217 573.5 1337.5Q770 1458 997 1455Q1260 1457 1427.0 1299.5Q1594 1142 1602 917Q1605 805 1535.0 720.5Q1465 636 1364 582Q1333 566 1322.0 585.0Q1311 604 1338 619Q1440 682 1466.5 751.0Q1493 820 1490 928Q1484 1113 1349.0 1258.5Q1214 1404 995 1412Q726 1409 601.0 1226.0Q476 1043 605 842Q612 830 624 833Q636 838 635 852Q626 942 662.5 1042.0Q699 1142 822.5 1201.0Q946 1260 1079.0 1211.0Q1212 1162 1269 1050Q1313 962 1336.5 908.5Q1360 855 1390 859Q1413 863 1418.5 846.0Q1424 829 1401 817L1165 682Q1155 676 1155.0 667.0Q1155 658 1166 653Q1222 623 1273.0 531.0Q1324 439 1378 301Q1449 117 1567 160Q1599 174 1609.5 156.0Q1620 138 1589 119L1351 -34Q1342 -39 1333 -34Q1238 29 1178.0 130.0Q1118 231 1078 363Q1050 455 1003.0 504.5Q956 554 898 530Q870 520 862.0 538.0Q854 556 878 569Z" transform="translate(0,0) scale(1,-1)" mask="url(#m0)"/><path class="ink" d="M52 1314Q39 1328 51.5 1341.0Q64 1354 83 1336Q106 1308 130.5 1276.0Q155 1244 172 1210Q177 1200 186.5 1200.0Q196 1200 201 1208Q260 1308 365.0 1369.5Q470 1431 592 1427Q615 1426 616.0 1407.5Q617 1389 592 1389Q493 1389 433.5 1332.0Q374 1275 374 1124L373 258Q373 226 388 217L460 176Q485 167 529 224Q540 239 556.0 230.5Q572 222 555 204Q450 87 394 -26Q382 -47 358 -26Q309 37 257.0 73.5Q205 110 111 129Q95 131 94.5 143.5Q94 156 105 161Q130 170 150.5 194.5Q171 219 171 276L170 948Q170 1092 139.0 1175.0Q108 1258 52 1314Z" transform="translate(1662,0) scale(1,-1)" mask="url(#m1)"/><path class="ink" d="M388 -18Q373 -43 351 -18Q241 119 17 188Q-1 193 -0.5 204.0Q0 215 11 220Q75 242 75 353L72 863Q72 874 70.0 880.5Q68 887 71.5 892.5Q75 898 85 899Q351 921 558 1044Q567 1049 574.5 1047.0Q582 1045 583 1033Q600 925 689 821Q738 761 770.5 657.0Q803 553 796 484Q786 403 743.0 338.5Q700 274 645 220Q580 156 505.0 112.0Q430 68 388 -18ZM279 876 283 300Q283 285 295 279L472 169Q498 152 520 179Q615 281 606 424Q604 513 571.5 583.0Q539 653 491 707Q413 786 372 903Q370 908 363.0 911.5Q356 915 350 912Q320 901 290 893Q279 889 279 876Z" transform="translate(2221,0) scale(1,-1)" mask="url(#m2)"/><path class="ink" d="M113 915H12Q-3 915 -3.5 929.5Q-4 944 8 946Q73 957 116.0 1013.0Q159 1069 153 1159Q146 1301 190.0 1397.5Q234 1494 366 1451Q439 1426 499.5 1407.5Q560 1389 585 1428Q597 1452 610.0 1448.5Q623 1445 608 1406Q568 1293 510.5 1253.5Q453 1214 332 1272Q215 1326 194.5 1218.5Q174 1111 238 1078Q343 1024 365.5 952.5Q388 881 375 743L274 -309Q270 -343 253.0 -340.5Q236 -338 234 -307Q209 -1 183 304Q157 601 129 899Q128 907 125.0 911.0Q122 915 113 915Z" transform="translate(3068,0) scale(1,-1)" mask="url(#m3)"/><path class="ink" d="M383 815 382 255Q382 224 397 214L469 173Q490 155 539 221Q548 234 563.5 225.0Q579 216 565 201Q458 84 404 -29Q387 -50 367 -29Q311 37 263.0 70.0Q215 103 120 126Q104 129 103.0 141.0Q102 153 115 158Q182 174 181 273L180 814Q181 832 165 832H47Q33 832 29 843Q25 854 38 862Q158 947 282.5 1067.0Q407 1187 509 1295Q522 1309 534.5 1300.5Q547 1292 535 1276Q489 1219 442.5 1128.0Q396 1037 386 962Q384 952 387 947Q393 941 401 941H574Q581 941 586 936Q591 929 591 923L587 848Q585 832 570 832H397Q383 832 383 815Z" transform="translate(3568,0) scale(1,-1)" mask="url(#m4)"/><path class="ink" d="M340 -28Q338 -4 314.5 8.0Q291 20 275 32Q160 110 112.5 222.5Q65 335 59 461Q47 746 213 895Q272 948 349.0 981.5Q426 1015 507 1036Q532 1041 544 1011L688 673Q698 646 681 639H679L269 480Q257 474 259 461Q308 239 423.0 176.5Q538 114 652 158Q672 167 677.5 155.0Q683 143 670 137Q589 96 515.5 53.0Q442 10 384 -37Q375 -43 357.5 -41.0Q340 -39 340 -28ZM247 537Q248 529 254.0 524.5Q260 520 269 524L482 604Q497 610 491 625L369 924Q360 946 333 930Q275 896 254.0 775.0Q233 654 247 537Z" transform="translate(4201,0) scale(1,-1)" mask="url(#m5)"/><path class="ink" d="M392 750 391 265Q391 233 407 224L479 182Q502 168 549 231Q559 244 574.0 236.5Q589 229 574 211Q469 94 413 -19Q396 -42 376 -19Q320 46 271.5 80.0Q223 114 129 136Q111 141 111.0 152.0Q111 163 124 168Q191 179 190 283V706Q190 808 152 831Q108 860 80 810Q69 789 55.0 800.0Q41 811 56 835Q85 881 111.5 929.0Q138 977 166 1025Q183 1055 211 1036Q358 965 387 856Q390 846 399.0 843.5Q408 841 415 850L569 1027Q575 1033 583.0 1032.5Q591 1032 596 1024L701 823Q705 814 699 806L579 662Q572 655 563.5 656.0Q555 657 552 665L471 815Q467 821 458.5 822.5Q450 824 443 817L396 760Q392 756 392 750Z" transform="translate(4942,0) scale(1,-1)" mask="url(#m6)"/></g>
+  </svg>
+  <div class="sub" id="splashSub">Psalterium · Orationes</div>
+</div>
+
+<header id="bar">
+  <button class="ib" id="bBack" aria-label="Back"><svg viewBox="0 0 24 24"><path d="M15 5l-7 7 7 7"/></svg></button>
+  <div class="t" id="bTitle"></div>
+  <button class="ib" id="bSearch" aria-label="Search"><svg viewBox="0 0 24 24"><circle cx="10.5" cy="10.5" r="6.5"/><path d="M15.5 15.5L21 21"/></svg></button>
+  <button class="ib" id="bSet" aria-label="Settings"><svg viewBox="0 0 24 24"><path d="M4 7h10M18 7h2M4 17h4M12 17h8"/><circle cx="16" cy="7" r="2"/><circle cx="10" cy="17" r="2"/></svg></button>
+</header>
+
+<main id="main"></main>
+
+<div id="veil"></div>
+<div id="sheet" role="dialog" aria-label="Settings">
+  <h3>Ordo</h3>
+  <div class="opt"><div class="l">Lingua</div>
+    <div class="seg" data-k="lang"><button data-v="la">Latine</button><button data-v="both">Utrumque</button><button data-v="en">English</button></div></div>
+  <div class="opt"><div class="l">Lumen<small>Nox for Vigils in the dark</small></div>
+    <div class="seg" data-k="light"><button data-v="lux">Lux</button><button data-v="auto">Auto</button><button data-v="nox">Nox</button></div></div>
+  <div class="opt"><div class="l">Litterae<small>Text size</small></div>
+    <div class="seg" data-k="size"><button data-v="-">A −</button><button data-v="+">A +</button></div></div>
+  <div class="opt"><div class="l">Tituli<small>Psalm superscriptions</small></div>
+    <div class="seg" data-k="titles"><button data-v="1">On</button><button data-v="0">Off</button></div></div>
+  <div class="opt"><div class="l">Gloria Patri<small>after each psalm</small></div>
+    <div class="seg" data-k="gloria"><button data-v="1">On</button><button data-v="0">Off</button></div></div>
+  <div class="colophon">Latin: Clementine Vulgate (Gallican Psalter). English: Douay-Rheims, Challoner revision. Psalms numbered after the Vulgate; Hebrew numbering shown beneath.<br>All texts in the public domain.</div>
+</div>
+
+<script src="data.js"></script>
+<script>
+(function(){
+"use strict";
+const K = window.KL, $ = s=>document.querySelector(s), main=$('#main');
+const store={get(k,d){try{const v=localStorage.getItem('kl.'+k);return v==null?d:JSON.parse(v)}catch(e){return d}},
+             set(k,v){try{localStorage.setItem('kl.'+k,JSON.stringify(v))}catch(e){}}};
+const S={lang:store.get('lang','both'),light:store.get('light','auto'),fs:store.get('fs',19),titles:store.get('titles',1),gloria:store.get('gloria',1)};
+
+/* ---------- helpers ---------- */
+function roman(n){const m=[[100,'C'],[90,'XC'],[50,'L'],[40,'XL'],[10,'X'],[9,'IX'],[5,'V'],[4,'IV'],[1,'I']];let s='';for(const[v,r]of m)while(n>=v){s+=r;n-=v}return s}
+const esc=s=>String(s).replace(/[&<>"]/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c]));
+function norm(s){return s.toLowerCase().replace(/æ/g,'ae').replace(/œ/g,'oe').normalize('NFD').replace(/[̀-ͯ]/g,'').replace(/j/g,'i').replace(/[’']/g,"'")}
+const HEBL={Aleph:'א',Beth:'ב',Ghimel:'ג',Daleth:'ד',He:'ה',Vau:'ו',Zain:'ז',Heth:'ח',Teth:'ט',Jod:'י',Caph:'כ',Lamed:'ל',Mem:'מ',Nun:'נ',Samech:'ס',Ain:'ע',Phe:'פ',Sade:'צ',Coph:'ק',Res:'ר',Sin:'ש',Tau:'ת'};
+const PS=K.ps, CA=K.ca, OR=K.or, CO=K.co;
+const byId=(a,id)=>a.find(x=>x.id===id);
+
+/* ---------- liturgical day ---------- */
+function easter(y){const a=y%19,b=Math.floor(y/100),c=y%100,d=Math.floor(b/4),e=b%4,f=Math.floor((b+8)/25),g=Math.floor((b-f+1)/3),h=(19*a+b-d-g+15)%30,i=Math.floor(c/4),k=c%4,l=(32+2*e+2*i-h-k)%7,m=Math.floor((a+11*h+22*l)/451),mo=Math.floor((h+l-7*m+114)/31),da=((h+l-7*m+114)%31)+1;return new Date(y,mo-1,da)}
+function addD(d,n){const x=new Date(d);x.setDate(x.getDate()+n);return x}
+function marian(now){
+  const y=now.getFullYear(), t=new Date(y,now.getMonth(),now.getDate());
+  const xmas=new Date(y,11,25), adv=addD(xmas,-(xmas.getDay()||7)-21);
+  const E=easter(y), pent=addD(E,49), trin=addD(E,56);
+  if(t>=adv||t<new Date(y,1,3)) return 'almaredemptoris';
+  if(t<E) return 'averegina';
+  if(t<trin) return 'reginacaeli';
+  return 'salve';
+}
+function latinDate(d){
+  const fer=['Dominica','Feria II','Feria III','Feria IV','Feria V','Feria VI','Sabbato'];
+  const mon=['Januarii','Februarii','Martii','Aprilis','Maii','Junii','Julii','Augusti','Septembris','Octobris','Novembris','Decembris'];
+  return `<b>${fer[d.getDay()]}</b> · die ${roman(d.getDate())} ${mon[d.getMonth()]} · ${romanBig(d.getFullYear())}`;
+}
+function romanBig(n){let s='';while(n>=1000){s+='M';n-=1000}if(n>=900){s+='CM';n-=900}if(n>=500){s+='D';n-=500}if(n>=400){s+='CD';n-=400}return s+roman(n)}
+
+/* ---------- settings ---------- */
+function apply(){
+  document.body.classList.remove('lang-la','lang-en','lang-both');document.body.classList.add('lang-'+S.lang);
+  const h=new Date().getHours(), nox=S.light==='nox'||(S.light==='auto'&&(h>=21||h<6));
+  document.body.classList.toggle('nox',nox);
+  document.querySelector('meta[name=theme-color]').content=nox?'#15100b':'#e9dcbf';
+  document.documentElement.style.setProperty('--fs',S.fs+'px');
+  document.body.classList.toggle('noTitles',!S.titles);
+  document.body.classList.toggle('noGloria',!S.gloria);
+  document.querySelectorAll('.seg').forEach(g=>{const k=g.dataset.k;g.querySelectorAll('button').forEach(b=>{
+    const v=b.dataset.v;b.classList.toggle('on',k==='size'?false:String(k==='lang'?S.lang:k==='light'?S.light:k==='titles'?S.titles:S.gloria)===v)})});
+}
+document.querySelectorAll('.seg button').forEach(b=>b.addEventListener('click',()=>{
+  const k=b.parentNode.dataset.k,v=b.dataset.v;
+  if(k==='lang')S.lang=v; if(k==='light')S.light=v;
+  if(k==='size')S.fs=Math.max(15,Math.min(28,S.fs+(v==='+'?1:-1)));
+  if(k==='titles')S.titles=+v; if(k==='gloria')S.gloria=+v;
+  store.set('lang',S.lang);store.set('light',S.light);store.set('fs',S.fs);store.set('titles',S.titles);store.set('gloria',S.gloria);apply();
+}));
+setInterval(()=>{if(S.light==='auto')apply()},60000);
+const veil=$('#veil'),sheet=$('#sheet');
+function sheetOn(on){veil.classList.toggle('on',on);sheet.classList.toggle('on',on)}
+$('#bSet').onclick=()=>sheetOn(true); veil.onclick=()=>sheetOn(false);
+
+/* ---------- rendering ---------- */
+function initial(t){ // wrap first letter
+  const m=t.match(/^([^A-Za-zÆŒæœ]*)([A-Za-zÆŒæœ])/); if(!m) return esc(t);
+  return esc(m[1])+'<span class="init">'+esc(m[2])+'</span>'+esc(t.slice(m[0].length));
+}
+function verseHTML(arr, opt={}){
+  let h='';
+  arr.forEach((v,i)=>{
+    const [n,la,en,sec,heb]=v;
+    if(heb) h+=`<div class="hebnote">${esc(heb)}</div>`;
+    if(sec) h+=`<div class="secH"><span class="f">${esc(sec)}</span><span class="h">${HEBL[sec]||''}</span></div>`;
+    const first=i===0&&opt.init!==false;
+    h+=`<p class="v" id="${opt.pfx||'v'}${n}">${first?'':`<sup>${n}</sup>`}<span class="la">${first?initial(la):esc(la)}</span> <span class="en">${first?initial(en):esc(en)}</span></p>`;
+  });
+  return h;
+}
+const GP=`<div class="gp"><p class="v"><span class="la">Gloria Patri, et Filio, et Spiritui Sancto.<br><span class="r">Sicut erat in principio, et nunc, et semper, et in sæcula sæculorum. Amen.</span></span> <span class="en">Glory be to the Father, and to the Son, and to the Holy Ghost.<br><span class="r">As it was in the beginning, is now, and ever shall be, world without end. Amen.</span></span></p></div>`;
+function psBody(p,pfx){
+  let h='';
+  if(p.tl) h+=`<div class="title"><span class="la">${esc(p.tl)}</span> <span class="en">${esc(p.te)}</span></div>`;
+  return h+verseHTML(p.v,{pfx})+GP;
+}
+
+/* ---------- views ---------- */
+const bar=$('#bar'),bTitle=$('#bTitle'),bBack=$('#bBack');
+let backTo='';
+function setBar(title,back){bTitle.innerHTML=esc(title||'').replace(/ ([IVXLC]+)$/,' <span style="font-family:var(--serif);font-weight:500;font-size:19px;letter-spacing:.05em">$1</span>');backTo=back;bBack.classList.toggle('off',!back)}
+bBack.onclick=()=>{ if(backTo) go(backTo) };
+$('#bSearch').onclick=()=>go('quaere');
+function go(h){ if(location.hash==='#'+h) route(); else location.hash=h; }
+
+function vHome(){
+  setBar('',null);
+  const last=store.get('last',null), mid=marian(new Date()), m=byId(OR,mid);
+  let h=`<div class="view"><div class="home-h"><h1>Kloſter</h1></div>
+   <div class="orn"><span>✠</span></div>
+   <div class="date">${latinDate(new Date())}</div>
+   <label class="search-line"><svg viewBox="0 0 24 24"><circle cx="10.5" cy="10.5" r="6.5"/><path d="M15.5 15.5L21 21"/></svg>
+     <input id="hq" type="search" placeholder="Quaere · search psalms and prayers" enterkeyhint="search" autocomplete="off"></label>
+   <a class="big" href="#psalterium"><span class="ini">P</span><div><div class="nm">Psalterium</div><div class="sb">The CL Psalms of David</div></div><span class="ar">›</span></a>
+   <a class="big" href="#cantica"><span class="ini">C</span><div><div class="nm">Cantica</div><div class="sb">Benedictus · Magnificat · Nunc dimittis</div></div><span class="ar">›</span></a>
+   <a class="big" href="#orationes"><span class="ini">O</span><div><div class="nm">Orationes</div><div class="sb">Prayers, antiphons and hymns of the Hours</div></div><span class="ar">›</span></a>
+   <div class="sect">Collectiones</div>
+   ${CO.map(c=>`<a class="row" href="#co-${c.id}"><span class="no">${c.ps.length}</span><div class="tx"><div class="la">${esc(c.name)}</div><div class="en">${esc(c.sub)}</div></div></a>`).join('')}
+   <div class="sect">Hodie</div>
+   <a class="hint" href="#or-${m.id}"><span><span class="lbl">Antiphona B. M. V.</span><br><span class="v">${esc(m.name)}</span></span><span class="ar">›</span></a>`;
+  if(last){const p=PS[last.n-1]; h+=`<a class="hint" href="#ps-${p.n}" style="margin-top:10px"><span><span class="lbl">Lectio interrupta</span><br><span class="v">Psalmus ${roman(p.n)} · <i>${esc(p.i)}</i></span></span><span class="ar">›</span></a>`}
+  h+='</div>';
+  main.innerHTML=h;
+  const q=$('#hq'); q.addEventListener('keydown',e=>{if(e.key==='Enter'&&q.value.trim()){pendingQ=q.value.trim();go('quaere')}});
+}
+function vIndex(){
+  setBar('Psalterium','home');
+  const names=['Prima quinquagena','Secunda quinquagena','Tertia quinquagena'];
+  let h=`<div class="view"><div class="idx-h"><h2>Psalterium</h2><div class="date">Psalmi CL · secundum Vulgatam</div></div>
+    <div class="jump">${[1,26,51,76,101,126].map(n=>`<button data-j="${n}">${roman(n)}</button>`).join('')}</div>`;
+  PS.forEach(p=>{
+    if((p.n-1)%50===0) h+=`<div class="quin"><div class="q1">${names[(p.n-1)/50]}</div><div class="q2">Psalms ${p.n}–${p.n+49}</div></div>`;
+    h+=`<a class="row" id="r${p.n}" href="#ps-${p.n}"><span class="no">${roman(p.n)}</span><div class="tx"><div class="la">${esc(p.i)}</div><div class="en">${esc(p.ie)}</div></div>${p.h!==String(p.n)?`<span class="hb">${p.h}</span>`:''}</a>`;
+  });
+  main.innerHTML=h+'</div>';
+  main.querySelectorAll('[data-j]').forEach(b=>b.onclick=()=>scrollTo$('#r'+b.dataset.j));
+  const last=store.get('last',null); if(last) requestAnimationFrame(()=>scrollTo$('#r'+last.n,false));
+}
+function scrollTo$(sel,smooth=true){const el=document.querySelector(sel);if(!el)return;const y=el.getBoundingClientRect().top+scrollY-110;window.scrollTo({top:Math.max(0,y),behavior:smooth?'smooth':'auto'})}
+function vPsalm(n,hl){
+  const p=PS[n-1]; if(!p) return vIndex();
+  setBar('Psalmus '+roman(n),'psalterium');
+  const prev=PS[n-2],next=PS[n];
+  main.innerHTML=`<div class="view" id="rd"><div class="rd-h"><div class="num">Psalmus</div><h2 class="numr">${roman(n)}</h2>
+    <div class="inc">${esc(p.i)}</div>${p.h!==String(n)?`<div class="hb">Hebrew numbering: ${p.h}</div>`:''}</div>
+    <div class="orn"><span>✠</span></div>
+    ${psBody(p)}
+    <nav class="pn">${prev?`<a href="#ps-${prev.n}"><span class="k">‹ Psalmus ${roman(prev.n)}</span><span class="s">${esc(prev.i)}</span></a>`:''}
+    ${next?`<a class="nx" href="#ps-${next.n}"><span class="k">Psalmus ${roman(next.n)} ›</span><span class="s">${esc(next.i)}</span></a>`:''}</nav></div>`;
+  store.set('last',{n});
+  swipe(prev?'ps-'+prev.n:null,next?'ps-'+next.n:null);
+  if(hl) highlight(hl);
+}
+function highlight(id){requestAnimationFrame(()=>{const el=document.getElementById(id);if(el){scrollTo$('#'+id,false);el.classList.add('flash')}})}
+function vCantica(){
+  setBar('Cantica','home');
+  main.innerHTML=`<div class="view"><div class="idx-h"><h2>Cantica</h2><div class="date">Canticles of Scripture</div></div><div class="orn"><span>✠</span></div>
+   ${CA.map(c=>`<a class="row" href="#ca-${c.id}"><span class="no">${esc(c.ref.split(' ')[0])}</span><div class="tx"><div class="la">${esc(c.name)}</div><div class="en">${esc(c.sub)} · ${esc(c.ref)}</div></div></a>`).join('')}</div>`;
+}
+function vCanticum(id,hl){
+  const c=byId(CA,id); if(!c) return vCantica();
+  setBar(c.name,'cantica');
+  main.innerHTML=`<div class="view"><div class="rd-h"><div class="num">${esc(c.sub)}</div><h2>${esc(c.name)}</h2><div class="inc">${esc(c.ref)}</div></div>
+    <div class="orn"><span>✠</span></div>${verseHTML(c.v)}${GP}</div>`;
+  swipe(null,null); if(hl) highlight(hl);
+}
+function vOrationes(){
+  setBar('Orationes','home');
+  const mid=marian(new Date()); let h=`<div class="view"><div class="idx-h"><h2>Orationes</h2><div class="date">Preces · Antiphonæ · Hymni</div></div>`;
+  let g=null;
+  OR.forEach(o=>{ if(o.g!==g){g=o.g;h+=`<div class="sect">${esc(g)}</div>`}
+    h+=`<a class="row" href="#or-${o.id}"><span class="no">${o.form==='verse'?'❧':'✠'}</span><div class="tx"><div class="la">${esc(o.name)}${o.id===mid?'<span class="badge">hodie</span>':''}</div><div class="en">${esc(o.sub)}</div></div></a>`});
+  main.innerHTML=h+'</div>';
+}
+function blk(t){
+  if(t.startsWith('~')) return {cls:'rubric',html:esc(t.slice(1))};
+  const m=t.match(/^(V|R)\. (.*)$/s);
+  if(m) return {cls:'',html:`<span class="vr-sym">${m[1]==='V'?'℣.':'℟.'}</span>${esc(m[2])}`};
+  return {cls:'',html:esc(t)};
+}
+function vOratio(id,hl){
+  const o=byId(OR,id); if(!o) return vOrationes();
+  setBar(o.name,'orationes');
+  let body='';
+  o.la.forEach((la,i)=>{const a=blk(la),b=blk(o.en[i]);const head=a.cls&&o.id==='rosarium'?' head':'';
+    body+=`<div class="pr-blk ${a.cls}${head}" id="b${i}"><span class="la">${i===0&&!a.cls&&o.form!=='lines'?initial(la.replace(/^(V|R)\. /,'')):a.html}</span><span class="en">${b.html}</span></div>`});
+  // keep V/R symbol on first block if needed
+  if(o.form==='vr'||o.form==='lines'){body='';o.la.forEach((la,i)=>{const a=blk(la),b=blk(o.en[i]);body+=`<div class="pr-blk ${a.cls}" id="b${i}"><span class="la">${a.html}</span><span class="en">${b.html}</span></div>`})}
+  main.innerHTML=`<div class="view"><div class="rd-h"><div class="num">${esc(o.g)}</div><h2 style="font-size:${o.name.length>16?34:44}px">${esc(o.name)}</h2><div class="inc">${esc(o.sub)}</div></div>
+   <div class="orn"><span>✠</span></div><div class="${o.form}">${body}</div>${o.note?`<div class="note">${esc(o.note)}</div>`:''}</div>`;
+  swipe(null,null); if(hl) highlight(hl);
+}
+function vColl(id){
+  const c=byId(CO,id); if(!c) return vHome();
+  setBar(c.name.replace('Septem Psalmi ','Psalmi '),'home');
+  main.innerHTML=`<div class="view"><div class="rd-h"><div class="num">Collectio</div><h2 style="font-size:36px">${esc(c.name)}</h2><div class="inc">${esc(c.sub)}</div></div><div class="orn"><span>✠</span></div>
+   ${c.ps.map(n=>{const p=PS[n-1];return `<section class="coll-ps"><div class="num" style="text-align:center;color:var(--red);font-variant-caps:all-small-caps;letter-spacing:.2em;font-size:15px">Psalmus</div><h3 class="numr" style="font-size:34px!important">${roman(n)}</h3><div class="inc">${esc(p.i)}</div>${psBody(p,'c'+n+'v')}</section>`}).join('<div class="orn"><span>❧</span></div>')}</div>`;
+  swipe(null,null);
+}
+
+/* ---------- search ---------- */
+let IDX=null, pendingQ='';
+function buildIdx(){
+  IDX=[];
+  PS.forEach(p=>{
+    IDX.push({k:'t',href:`ps-${p.n}`,ref:`Psalmus ${roman(p.n)} · titulus`,la:p.tl||'',en:p.te||'',n:norm((p.tl||'')+' '+(p.te||''))});
+    p.v.forEach(v=>IDX.push({href:`ps-${p.n}`,hl:'v'+v[0],ref:`Ps. ${p.n}, ${v[0]}`,la:v[1],en:v[2],nl:norm(v[1]),ne:norm(v[2])}));
+  });
+  CA.forEach(c=>c.v.forEach(v=>IDX.push({href:`ca-${c.id}`,hl:'v'+v[0],ref:`${c.name} · ${c.ref.split(',')[0]}, ${v[0]}`,la:v[1],en:v[2],nl:norm(v[1]),ne:norm(v[2])})));
+  OR.forEach(o=>o.la.forEach((la,i)=>IDX.push({href:`or-${o.id}`,hl:'b'+i,ref:o.name,la:la.replace(/^[~]|^(V|R)\. /,''),en:o.en[i].replace(/^[~]|^(V|R)\. /,''),nl:norm(o.name+' '+la),ne:norm(o.sub+' '+o.en[i])})));
+}
+function qRegex(tok){
+  let r='';for(let i=0;i<tok.length;i++){const c=tok[i],d=tok.slice(i,i+2);
+    if(d==='ae'){r+='(?:ae|æ|Æ)';i++;continue} if(d==='oe'){r+='(?:oe|œ|Œ)';i++;continue}
+    if(c==='i')r+='[iíjJ]';else if(c==='e')r+='[eëéè]';else if(c==='a')r+='[aáà]';else if(c==='o')r+='[oóò]';else if(c==='u')r+='[uúù]';else r+=c.replace(/[.*+?^${}()|[\]\\]/g,'\\$&');}
+  return r;
+}
+function mark(text,toks){
+  let h=esc(text); if(!toks.length) return h;
+  const re=new RegExp('(^|[^A-Za-zÀ-ÿæœÆŒ])('+toks.map(qRegex).join('|')+')','gi');
+  return h.replace(re,'$1<mark>$2</mark>');
+}
+function snip(text,toks){
+  if(text.length<170) return mark(text,toks);
+  const n=norm(text),i=Math.max(0,n.indexOf(toks[0])-60);
+  return (i>0?'… ':'')+mark(text.slice(i,i+170),toks)+'…';
+}
+const HEB2V=(()=>{const m={};PS.forEach(p=>p.h.split('–').forEach(x=>{m[x]=m[x]||p.n}));return m})();
+function vSearch(){
+  setBar('Quaere','home'); if(!IDX) buildIdx();
+  main.innerHTML=`<div class="view"><label class="search-line" style="margin-top:6px"><svg viewBox="0 0 24 24"><circle cx="10.5" cy="10.5" r="6.5"/><path d="M15.5 15.5L21 21"/></svg>
+   <input id="sq" type="search" placeholder="e.g. miserere · the Lord is my light · 90" enterkeyhint="search" autocomplete="off"></label><div id="sr"></div></div>`;
+  const q=$('#sq'),out=$('#sr'); let tm;
+  q.value=pendingQ||store.get('q',''); pendingQ='';
+  const run=()=>{
+    const raw=q.value.trim(); store.set('q',raw);
+    if(!raw){out.innerHTML=`<div class="empty">Search Latin or English.<br>Type a number for a psalm.</div>`;return}
+    let h='';
+    const num=raw.match(/^(?:ps\.?\s*)?(\d{1,3})$/i);
+    if(num){const n=+num[1];
+      if(PS[n-1]) h+=`<a class="res" href="#ps-${n}"><div class="ref">Psalmus ${roman(n)}${PS[n-1].h!==String(n)?' · Hebrew '+PS[n-1].h:''}</div><div class="sn">${esc(PS[n-1].i)}</div></a>`;
+      const v=HEB2V[String(n)]; if(v&&v!==n) h+=`<a class="res" href="#ps-${v}"><div class="ref">Hebrew / modern Ps ${n} = Vulgate Psalmus ${roman(v)}</div><div class="sn">${esc(PS[v-1].i)}</div></a>`;
+    }
+    const toks=norm(raw).split(/\s+/).filter(t=>t.length>1||/\d/.test(t));
+    if(toks.length&&!num){
+      const res=toks.map(t=>new RegExp('(^|[^a-z])'+t.replace(/[.*+?^${}()|[\]\\]/g,'\\$&')));
+      const phrase=norm(raw).replace(/\s+/g,' ');
+      const hit=n=>res.every(r=>r.test(n));
+      let r=[];
+      for(const e of IDX){
+        if(e.k==='t'){ if(e.n.trim()&&hit(e.n)) r.push([e,'t',1]); continue }
+        const L=hit(e.nl), E=hit(e.ne);
+        if(L||E){const w=L?'la':'en';r.push([e,w,(w==='la'?e.nl:e.ne).includes(phrase)?0:1])}
+        if(r.length>=400) break;
+      }
+      r.sort((a,b)=>a[2]-b[2]); r=r.slice(0,300);
+      h+=`<div class="count">${r.length>=300?'300+':r.length} ${r.length===1?'locus':'loci'}</div>`;
+      h+=r.map(([e,w])=>`<a class="res" href="#${e.href}" data-hl="${e.hl||''}"><div class="ref">${esc(e.ref)}</div><div class="sn ${w==='en'?'en':''}">${snip(w==='en'?e.en:(w==='t'?(e.la||e.en):e.la),toks)}</div></a>`).join('');
+      if(!r.length) h+=`<div class="empty">Nihil inventum.</div>`;
+    }
+    out.innerHTML=h;
+    out.querySelectorAll('.res').forEach(a=>a.addEventListener('click',ev=>{const hl=a.dataset.hl;if(hl){ev.preventDefault();pendingHL=hl;go(a.getAttribute('href').slice(1))}}));
+  };
+  q.addEventListener('input',()=>{clearTimeout(tm);tm=setTimeout(run,180)});
+  run(); if(!q.value) setTimeout(()=>q.focus(),300);
+}
+let pendingHL=null;
+
+/* ---------- swipe ---------- */
+let swP=null,swN=null;
+function swipe(p,n){swP=p;swN=n}
+let tx=0,ty=0,tt=0;
+main.addEventListener('touchstart',e=>{const t=e.touches[0];tx=t.clientX;ty=t.clientY;tt=Date.now()},{passive:true});
+main.addEventListener('touchend',e=>{const t=e.changedTouches[0],dx=t.clientX-tx,dy=t.clientY-ty;
+  if(Date.now()-tt<600&&Math.abs(dx)>80&&Math.abs(dx)>Math.abs(dy)*2){ if(dx<0&&swN) go(swN); if(dx>0&&swP) go(swP); }},{passive:true});
+
+/* hide bar on scroll down */
+let lastY=0;addEventListener('scroll',()=>{const y=scrollY;bar.classList.toggle('hide',y>140&&y>lastY+4);if(y<lastY-4||y<140)bar.classList.remove('hide');lastY=y},{passive:true});
+
+/* ---------- router ---------- */
+function route(){
+  const h=location.hash.slice(1); sheetOn(false); const hl=pendingHL; pendingHL=null;
+  window.scrollTo(0,0);
+  let m;
+  if(!h||h==='home') vHome();
+  else if(h==='psalterium') vIndex();
+  else if((m=h.match(/^ps-(\d+)$/))) vPsalm(+m[1],hl);
+  else if(h==='cantica') vCantica();
+  else if((m=h.match(/^ca-([a-z]+)$/))) vCanticum(m[1],hl);
+  else if(h==='orationes') vOrationes();
+  else if((m=h.match(/^or-([a-z]+)$/))) vOratio(m[1],hl);
+  else if((m=h.match(/^co-([a-z]+)$/))) vColl(m[1]);
+  else if(h==='quaere') vSearch();
+  else vHome();
+}
+addEventListener('hashchange',route);
+apply(); route();
+
+/* ---------- splash: the invisible quill ---------- */
+(function(){
+  const sp=$('#splash'); if(!sp) return;
+  let done=false;
+  const finish=()=>{if(done)return;done=true;sp.classList.add('out');setTimeout(()=>sp.remove(),600)};
+  sp.addEventListener('click',finish);
+  const reduce=matchMedia('(prefers-reduced-motion: reduce)').matches;
+  const strokes=[...sp.querySelectorAll('.mk')], inks=[...sp.querySelectorAll('.ink')];
+  if(reduce){inks.forEach(i=>i.removeAttribute('mask'));setTimeout(finish,900);return}
+  const lens=strokes.map(s=>{const L=s.getTotalLength();s.style.strokeDasharray=L+' '+L;s.style.strokeDashoffset=L;return L});
+  const total=lens.reduce((a,b)=>a+b,0), T=1500; // ms of writing: one continuous stroke of the pen
+  const starts=[];let acc=0;lens.forEach(L=>{starts.push(acc);acc+=L});
+  document.querySelectorAll('#splash .ruling').forEach(r=>requestAnimationFrame(()=>r.classList.add('on')));
+  let t0=null; const start=180;
+  const ease=x=>x<.5?4*x*x*x:1-Math.pow(-2*x+2,3)/2;
+  function frame(ts){
+    if(done||!sp.isConnected) return; if(t0==null)t0=ts;
+    const t=Math.max(0,ts-t0-start), pr=ease(Math.min(1,t/T)), drawn=pr*total;
+    strokes.forEach((s,i)=>{const p=Math.min(1,Math.max(0,(drawn-starts[i])/lens[i]));s.style.strokeDashoffset=lens[i]*(1-p)});
+    if(t<T) requestAnimationFrame(frame);
+    else { inks.forEach(i=>i.classList.add('dry')); $('#splashSub').classList.add('on'); setTimeout(finish,850); }
+  }
+  // wait for nothing external: glyphs are inline paths
+  requestAnimationFrame(frame);
+})();
+})();
+</script>
+</body>
+</html>

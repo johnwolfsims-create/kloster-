@@ -211,6 +211,20 @@ body.lang-en .hr-rub .en{opacity:1}
 .ftog{display:flex;width:100%;align-items:center;justify-content:space-between;padding:4px 4px 8px;color:var(--ink3);font-size:15px;font-style:italic}
 .ftog .car{font-style:normal;font-variant-caps:all-small-caps;letter-spacing:.12em;color:var(--red)}
 
+
+#penna{position:fixed;right:calc(18px + env(safe-area-inset-right,0px));bottom:calc(18px + var(--bot));z-index:30;width:54px;height:54px;border-radius:50%;
+  display:grid;place-items:center;background:var(--bg);border:1px solid var(--rule);box-shadow:0 4px 18px var(--shadow);transition:transform .2s,opacity .3s,background .3s}
+#penna:active{transform:scale(.92)}
+#penna svg{width:30px;height:30px;overflow:visible}
+#penna .fe{fill:var(--ink);transition:fill .3s,opacity .3s}
+#penna .sp{fill:none;stroke:var(--bg);stroke-width:1.2;stroke-linecap:round}
+#penna .sh{fill:none;stroke:var(--ink);stroke-width:1.6;stroke-linecap:round}
+#penna .dr{fill:var(--red);transition:opacity .3s,transform .3s;transform-origin:5px 28px}
+#penna.off .fe{opacity:.35}
+#penna.off .sh{opacity:.45}
+#penna.off .dr{opacity:0;transform:scale(.2)}
+body.sheet-on #penna,body:has(#splash) #penna{opacity:0;pointer-events:none}
+
 /* search */
 .res{padding:12px 4px;border-bottom:1px solid var(--rule);display:block}
 .res:active{background:var(--rule)}
@@ -289,6 +303,7 @@ body.nox #splash .ink.dry{fill:#d7c39c}
 
 <main id="main"></main>
 
+<button id="penna" aria-label="Toggle English" title="English on/off"><svg viewBox="0 0 32 32"><path class="fe" d="M27 4c-7 1-13 5-16 11l-2 5 4-1c6-2 11-7 14-15z"/><path class="sp" d="M25 6C19 9 14 13 10 21"/><path class="sh" d="M10 21L5.5 27.5"/><circle class="dr" cx="5" cy="28.4" r="1.3"/></svg></button>
 <div id="veil"></div>
 <div id="sheet" role="dialog" aria-label="Settings">
   <h3>Ordo</h3>
@@ -350,6 +365,7 @@ function apply(){
   document.documentElement.style.setProperty('--fs',S.fs+'px');
   document.body.classList.toggle('noTitles',!S.titles);
   document.body.classList.toggle('noGloria',!S.gloria);
+  if(typeof syncQuill==='function')syncQuill();
   document.querySelectorAll('.seg').forEach(g=>{const k=g.dataset.k;g.querySelectorAll('button').forEach(b=>{
     const v=b.dataset.v;b.classList.toggle('on',k==='size'?false:String(k==='lang'?S.lang:k==='light'?S.light:k==='titles'?S.titles:S.gloria)===v)})});
 }
@@ -361,8 +377,14 @@ document.querySelectorAll('.seg button').forEach(b=>b.addEventListener('click',(
   store.set('lang',S.lang);store.set('light',S.light);store.set('fs',S.fs);store.set('titles',S.titles);store.set('gloria',S.gloria);apply();
 }));
 setInterval(()=>{if(S.light==='auto')apply()},60000);
+const quill=$('#penna');
+function syncQuill(){quill.classList.toggle('off',S.lang==='la');quill.setAttribute('aria-pressed',S.lang!=='la')}
+quill.onclick=()=>{
+  if(S.lang==='la'){S.lang=store.get('langPrev','both')}else{store.set('langPrev',S.lang);S.lang='la'}
+  store.set('lang',S.lang);apply();
+};
 const veil=$('#veil'),sheet=$('#sheet');
-function sheetOn(on){veil.classList.toggle('on',on);sheet.classList.toggle('on',on)}
+function sheetOn(on){veil.classList.toggle('on',on);sheet.classList.toggle('on',on);document.body.classList.toggle('sheet-on',on)}
 $('#bSet').onclick=()=>sheetOn(true); veil.onclick=()=>sheetOn(false);
 
 /* ---------- rendering ---------- */
